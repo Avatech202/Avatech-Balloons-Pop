@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, height=device-height, user-scalable=no">
+<title>Avatech Balloons Pop</title>
+
+<style>
+html, body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(180deg, #4b0082, #1a1a2e);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100dvh;
+    color: white;
+    overflow: hidden;
+    touch-action: none;
+}
+#splash, #game, #winScreen, #lossScreen, #menuOverlay {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: absolute;
+}
+#logo {
+    width: 300px;
+    max-width: 80vw;
+    height: 100px;
+    background: linear-gradient(90deg,#ff4d4d,#ffcc00);
+    color: #4b0082;
+    font-size: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+    border-radius: 15px;
+    box-shadow: 0 8px #990000;
+    text-shadow: 2px 2px 0 rgba(255,255,255,.5);
+}
+button,label {
+    padding: 8px 16px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 5px;
+    border: none;
+    border-radius: 8px;
+    background: #FF5E3A;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 4px #CC3F1C;
+    transition: all 0.1s;
+}
+button:active {
+    box-shadow: 0 1px #CC3F1C;
+    transform: translateY(2px);
+}
+#hudTop {
+    width: 95%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+    background: rgba(0,0,0,.35);
+    border-radius: 8px 8px 0 0;
+    font-size: 14px;
+}
+#hudTop div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3px;
+    font-size: 12px;
+}
+#scoreDisplay,#movesCounter,#goalTracker,#highScoreDisplay {
+    padding: 3px 8px;
+    font-size: 12px;
+    background: rgba(255,255,255,.1);
+    border-radius: 5px;
+}
+#menuBtn { margin-left: 10px; }
+#progressContainer {
+    width: 100%;
+    height: 12px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 3px;
+}
+#progressBar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg,#ff5e3a,#ffcc00);
+    border-radius: 8px;
+    transition: width 0.3s ease;
+}
+#gameFrame {
+    background: #222;
+    border: 5px solid #1b5e20;
+    border-radius: 15px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 380px;
+    width: 90vw;
+    box-shadow: 0 0 20px rgba(0,0,0,.7);
+    position: relative;
+}
+#grid {
+    display: grid;
+    grid-template-columns: repeat(6,1fr);
+    gap: 5px;
+    width: 100%;
+    aspect-ratio: 1/1;
+    border-radius: 10px;
+    background: #333;
+    padding: 5px;
+    box-sizing: border-box;
+}
+.balloon {
+    width: 100%;
+    aspect-ratio: 1/1;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform .2s;
+    user-select: none;
+    touch-action: manipulation;
+}
+.balloon:active { transform: scale(1.2); }
+.pop { transform: scale(0); transition: transform 0.2s ease-out; }
+.special {
+    position: relative;
+    border: 3px solid gold;
+    box-sizing: border-box;
+    font-weight: bold;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+}
+#menuOverlay,#winScreen,#lossScreen {
+    width: 80%;
+    max-width: 380px;
+    padding: 25px;
+    background: rgba(20,20,50,.95);
+    border-radius: 20px;
+    box-shadow: 0 0 35px rgba(0,0,0,.8);
+    z-index: 100;
+}
+#menuOverlay h2 { color:white; margin-bottom: 20px; }
+</style>
+</head>
+
+<body>
+
+<div id="splash">
+    <div id="logo">Avatech Balloons Pop</div>
+    <button id="startBtn">Start Game</button>
+</div>
+
+<div id="game">
+    <div id="hudTop">
+        <div>
+            <button id="menuBtn">Menu</button>
+            <div id="goalTracker">Score Target: 200</div>
+            <div id="movesCounter">Moves: 20</div>
+            <div id="scoreDisplay">Score: 0 | Level: 1</div>
+            <div id="highScoreDisplay">High Score: 0</div>
+        </div>
+        <div id="progressContainer"><div id="progressBar"></div></div>
+    </div>
+    <div id="gameFrame">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<div id="menuOverlay">
+    <h2>Game Paused</h2>
+    <button id="resumeBtn">Resume</button>
+    <button id="restartBtn">Restart Level</button>
+    <button id="restartGameBtn">Restart Game</button>
+    <label>Music: <input type="checkbox" id="musicToggle" checked></label>
+    <label>SFX: <input type="checkbox" id="sfxToggle" checked></label>
+</div>
+
+<div id="winScreen">
+    <div id="logo">Level Complete!🎉️</div>
+    <p>Great job!👏️</p>
+    <button id="winRestartBtn">Next Level</button>
+</div>
+
+<div id="lossScreen">
+    <div id="logo" style="background:#a30000;">Level Failed!</div>
+    <p>Moves ran out!</p>
+    <button id="lossRestartBtn">Try Again</button>
+</div>
+
+<audio id="popSound" src="Balloon-pop.mp3"></audio>
+<audio id="bgMusic" src="SoundHelix-Song-1.mp3" loop></audio>
+
+<script>
+// ==== GAME LOGIC ====
+const balloonColors=['red','blue','green','yellow','purple'];
+const GRID_SIZE=6;
+let grid=[],score=0,level=1,movesLeft=20,firstClick=null,matching=false,highScore=0,popCount=0;
+
+level = parseInt(localStorage.getItem('AvatechLevel')) || 1;
+score = parseInt(localStorage.getItem('AvatechScore')) || 0;
+highScore = parseInt(localStorage.getItem('AvatechHighScore')) || 0;
+movesLeft = 20 + (level-1)*5;
+
+const splash=document.getElementById('splash');
+const startBtn=document.getElementById('startBtn');
+const gameDiv=document.getElementById('game');
+const gridDiv=document.getElementById('grid');
+const movesCounter=document.getElementById('movesCounter');
+const scoreDisplay=document.getElementById('scoreDisplay');
+const goalTracker=document.getElementById('goalTracker');
+const highScoreDisplay=document.getElementById('highScoreDisplay');
+const popSound=document.getElementById('popSound');
+const bgMusic=document.getElementById('bgMusic');
+const menuBtn=document.getElementById('menuBtn');
+const menuOverlay=document.getElementById('menuOverlay');
+const resumeBtn=document.getElementById('resumeBtn');
+const restartBtn=document.getElementById('restartBtn');
+const restartGameBtn=document.getElementById('restartGameBtn');
+const musicToggle=document.getElementById('musicToggle');
+const sfxToggle=document.getElementById('sfxToggle');
+const winScreen=document.getElementById('winScreen');
+const winRestartBtn=document.getElementById('winRestartBtn');
+const lossScreen=document.getElementById('lossScreen');
+const lossRestartBtn=document.getElementById('lossRestartBtn');
+
+musicToggle.checked = localStorage.getItem('AvatechMusic')!=='false';
+sfxToggle.checked = localStorage.getItem('AvatechSFX')!=='false';
+
+function savePreferences(){
+  localStorage.setItem('AvatechMusic',musicToggle.checked);
+  localStorage.setItem('AvatechSFX',sfxToggle.checked);
+}
+function saveProgress() {
+  localStorage.setItem('AvatechLevel', level);
+  localStorage.setItem('AvatechScore', score);
+  localStorage.setItem('AvatechHighScore', highScore);
+  localStorage.setItem('AvatechMoves', movesLeft);
+}
+
+function updateHUD(){
+    scoreDisplay.textContent=`Score: ${score} | Level: ${level}`;
+    movesCounter.textContent=`Moves: ${movesLeft}`;
+    highScoreDisplay.textContent=`High Score: ${highScore}`;
+    const levelTarget = level*200;
+    goalTracker.textContent=`Score Target: ${levelTarget}`;
+    goalTracker.style.color=(score>=levelTarget)?'lightgreen':'white';
+    document.getElementById('progressBar').style.width=Math.min((score/levelTarget)*100,100)+'%';
+    saveProgress();
+}
+
+function randomColor(){ return balloonColors[Math.floor(Math.random()*balloonColors.length)]; }
+
+function initGrid(){
+    gridDiv.innerHTML=''; grid=[];
+    for(let i=0;i<GRID_SIZE*GRID_SIZE;i++){
+        const color=randomColor();
+        const b=document.createElement('div');
+        b.classList.add('balloon');
+        b.style.backgroundColor=color;
+        b.dataset.color=color;
+        b.dataset.index=i;
+        b.addEventListener('pointerdown',onBalloonClick);
+        gridDiv.appendChild(b);
+        grid.push(b);
+    }
+    matching=false; updateHUD(); adjustBoardScale();
+}
+
+function swapBalloons(b1,b2){
+    const c1=b1.dataset.color,c2=b2.dataset.color;
+    b1.dataset.color=c2;b1.style.backgroundColor=c2;
+    b2.dataset.color=c1;b2.style.backgroundColor=c1;
+}
+
+function isAdjacent(i1,i2){
+    const r1=Math.floor(i1/GRID_SIZE),c1=i1%GRID_SIZE,r2=Math.floor(i2/GRID_SIZE),c2=i2%GRID_SIZE;
+    return (Math.abs(r1-r2)===1 && c1===c2)||(Math.abs(c1-c2)===1 && r1===r2);
+}
+
+function playPopSound(){
+    if(!sfxToggle.checked) return;
+    const pop=popSound.cloneNode();
+    pop.volume=0.8; pop.play().catch(()=>{});
+}
+
+function findMatches(){
+    let matched=new Set();
+    for(let r=0;r<GRID_SIZE;r++){
+        for(let c=0;c<GRID_SIZE-2;c++){
+            const i=r*GRID_SIZE+c;
+            const color=grid[i].dataset.color;
+            if(color==='empty') continue;
+            let count=1;
+            while(c+count<GRID_SIZE && grid[r*GRID_SIZE+c+count].dataset.color===color) count++;
+            if(count>=3) for(let k=0;k<count;k++) matched.add(i+k);
+        }
+    }
+    for(let c=0;c<GRID_SIZE;c++){
+        for(let r=0;r<GRID_SIZE-2;r++){
+            const i=r*GRID_SIZE+c;
+            const color=grid[i].dataset.color;
+            if(color==='empty') continue;
+            let count=1;
+            while(r+count<GRID_SIZE && grid[(r+count)*GRID_SIZE+c].dataset.color===color) count++;
+            if(count>=3) for(let k=0;k<count;k++) matched.add((r+k)*GRID_SIZE+c);
+        }
+    }
+    return Array.from(matched);
+}
+
+function applyGravity(){
+    for(let c=0;c<GRID_SIZE;c++){
+        let emptyCount=0;
+        for(let r=GRID_SIZE-1;r>=0;r--){
+            const i=r*GRID_SIZE+c;
+            const b=grid[i];
+            if(b.dataset.color==='empty'){ emptyCount++; continue; }
+            if(emptyCount>0){
+                const target=grid[i+emptyCount*GRID_SIZE];
+                const tmpColor=b.dataset.color;
+                target.dataset.color=tmpColor;
+                target.style.backgroundColor=tmpColor;
+                b.dataset.color='empty';
+                b.style.backgroundColor='';
+            }
+        }
+        for(let r=0;r<emptyCount;r++){
+            const i=r*GRID_SIZE+c;
+            const b=grid[i];
+            const color=randomColor();
+            b.dataset.color=color;
+            b.style.backgroundColor=color;
+        }
+    }
+}
+
+function createSpecialBalloon(type,index){
+    const b=grid[index];
+    if(b.dataset.color==='empty') return;
+    b.classList.add('special');
+    b.dataset.special=type;
+    b.textContent = (type==='bomb')?'🔥':'⚡';
+    b.addEventListener('click',specialBalloonClick);
+}
+
+function specialBalloonClick(e){
+    const b=e.currentTarget;
+    const type=b.dataset.special;
+    let affected=[];
+    if(type==='bomb'){
+        const idx=parseInt(b.dataset.index);
+        const r=Math.floor(idx/GRID_SIZE), c=idx%GRID_SIZE;
+        for(let dr=-1;dr<=1;dr++){
+            for(let dc=-1;dc<=1;dc++){
+                const nr=r+dr, nc=c+dc;
+                if(nr>=0 && nr<GRID_SIZE && nc>=0 && nc<GRID_SIZE){
+                    const ni=nr*GRID_SIZE+nc;
+                    if(grid[ni].dataset.color!=='empty') affected.push(grid[ni]);
+                }
+            }
+        }
+    } else if(type==='row'){
+        const idx=parseInt(b.dataset.index);
+        const r=Math.floor(idx/GRID_SIZE);
+        for(let c=0;c<GRID_SIZE;c++){
+            const ni=r*GRID_SIZE+c;
+            if(grid[ni].dataset.color!=='empty') affected.push(grid[ni]);
+        }
+    }
+    affected.forEach(bb=>{
+        playPopSound();
+        bb.dataset.color='empty';
+        bb.style.backgroundColor='';
+        score+=10;
+    });
+    b.dataset.special='';
+    b.classList.remove('special');
+    b.textContent='';
+    applyGravity();
+    updateHUD();
+}
+
+function checkMatches(){
+    const matched=findMatches();
+    if(matched.length===0){
+        matching=false; updateHUD();
+        const levelTarget=level*200;
+        if(score>=levelTarget){gameDiv.style.display='none';winScreen.style.display='flex';bgMusic.pause();}
+        else if(movesLeft<=0){gameDiv.style.display='none';lossScreen.style.display='flex';bgMusic.pause();}
+        return;
+    }
+    matching=true;
+    matched.forEach(i=>{
+        const b=grid[i];
+        playPopSound();
+        b.classList.add('pop');
+        score+=10;
+        popCount++;
+        if(score>highScore){highScore=score;localStorage.setItem('AvatechHighScore',highScore);}
+        b.dataset.color='empty'; b.style.backgroundColor=''; b.textContent='';
+    });
+    setTimeout(()=>{
+        grid.forEach(b=>b.classList.remove('pop'));
+        applyGravity();
+
+        if(popCount>=6 && !grid.some(b=>b.dataset.special==='bomb')){
+            const bombIndex=Math.floor(Math.random()*GRID_SIZE*GRID_SIZE);
+            createSpecialBalloon('bomb',bombIndex);
+        }
+        if(popCount>=8 && !grid.some(b=>b.dataset.special==='row')){
+            const rowIndex=Math.floor(Math.random()*GRID_SIZE*GRID_SIZE);
+            createSpecialBalloon('row',rowIndex);
+        }
+
+        setTimeout(checkMatches,100);
+    },200);
+}
+
+function onBalloonClick(e){
+    e.preventDefault();
+    const b=e.currentTarget;
+    if(matching) return;
+    if(!firstClick){ firstClick=b; b.style.transform='scale(1.2)'; return; }
+    const second=b;
+    if(!isAdjacent(parseInt(firstClick.dataset.index),parseInt(second.dataset.index))){
+        firstClick.style.transform='scale(1)'; firstClick=second; firstClick.style.transform='scale(1.2)'; return;
+    }
+    swapBalloons(firstClick,second);
+    if(findMatches().length===0){ swapBalloons(firstClick,second); firstClick.style.transform='scale(1)'; firstClick=null; return; }
+    movesLeft--; popCount++; updateHUD();
+    firstClick.style.transform='scale(1)'; firstClick=null;
+    checkMatches();
+}
+
+// === Game Control ===
+function restartLevel(){score=0; movesLeft=20+(level-1)*5; firstClick=null; popCount=0; gameDiv.style.display='flex'; winScreen.style.display='none'; lossScreen.style.display='none'; initGrid(); updateHUD(); if(musicToggle.checked)bgMusic.play();}
+function restartGame(){level=1; restartLevel();}
+function nextLevel(){level++; movesLeft=20+(level-1)*5; score=0; firstClick=null; popCount=0; gameDiv.style.display='flex'; winScreen.style.display='none'; initGrid(); updateHUD(); if(musicToggle.checked)bgMusic.play(); saveProgress();}
+
+// === FIXED BALLOON SIZING ===
+function adjustBoardScale(){
+    const frame = document.getElementById('gameFrame');
+    const gridDiv = document.getElementById('grid');
+
+    const style = getComputedStyle(frame);
+    const frameWidth = frame.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const frameHeight = frame.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+
+    const gap = 5; // matches CSS grid gap
+    const padding = 5; // matches #grid padding
+
+    const tileWidth = Math.floor((frameWidth - 2*padding - (GRID_SIZE-1)*gap)/GRID_SIZE);
+    const tileHeight = Math.floor((frameHeight - 2*padding - (GRID_SIZE-1)*gap)/GRID_SIZE);
+    const tileSize = Math.min(tileWidth, tileHeight);
+
+    document.querySelectorAll('.balloon').forEach(b=>{
+        b.style.width = tileSize + 'px';
+        b.style.height = tileSize + 'px';
+    });
+
+    const gridSize = tileSize * GRID_SIZE + (GRID_SIZE-1)*gap + 2*padding;
+    gridDiv.style.width = gridSize + 'px';
+    gridDiv.style.height = gridSize + 'px';
+}
+
+window.addEventListener('resize',adjustBoardScale);
+window.addEventListener('orientationchange',adjustBoardScale);
+
+// === Event Listeners ===
+splash.style.display='flex';
+startBtn.onclick=()=>{splash.style.display='none';gameDiv.style.display='flex';if(musicToggle.checked)bgMusic.play();initGrid();updateHUD();}
+menuBtn.onclick=()=>{menuOverlay.style.display='flex';bgMusic.pause();}
+resumeBtn.onclick=()=>{menuOverlay.style.display='none';if(musicToggle.checked)bgMusic.play();}
+restartBtn.onclick=()=>{menuOverlay.style.display='none';restartLevel();}
+restartGameBtn.onclick=()=>{if(confirm('Are you sure you want to restart the game?')){restartGame(); menuOverlay.style.display='none';}}
+winRestartBtn.onclick=()=>{nextLevel();}
+lossRestartBtn.onclick=()=>{restartLevel();}
+musicToggle.onchange=()=>{savePreferences();if(musicToggle.checked && gameDiv.style.display==='flex') bgMusic.play();else bgMusic.pause();}
+sfxToggle.onchange=savePreferences;
+document.addEventListener('keydown',(e)=>{if(e.key==='m'||e.key==='M'){musicToggle.checked=!musicToggle.checked;savePreferences();if(musicToggle.checked)bgMusic.play();else bgMusic.pause();}});
+</script>
+</body>
+</html>
+
